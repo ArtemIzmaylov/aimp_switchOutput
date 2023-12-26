@@ -5,12 +5,6 @@ Plugin for [AIMP for PC](https://www.aimp.ru/) that provides an ability to switc
 + [AIMP SDK](https://www.aimp.ru/?do=download&os=windows&cat=sdk)
 + [Delphi 10.4 or newer](https://www.embarcadero.com/ru/products/delphi)
 
-## Screenshots
+**Pluign Setup:**
 
-Plugin setup:
-
-![Setup1](/.screenshots/scr00.png)
-
-Hotkey setup:
-
-![Setup2](/.screenshots/scr01.png)
+![Setup](/.screenshots/Readme.png)
