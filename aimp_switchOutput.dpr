@@ -16,35 +16,39 @@ library aimp_switchOutput;
 
 uses
   Windows,
-  AIMPCustomPlugin,
   // API
   apiActions,
   apiCore,
   apiGUI,
   apiObjects,
   apiPlayer,
-  apiPlugin,
-  apiWrappers;
+  apiPlugin;
 
 type
 
   { TSwitchOutputPlugin }
 
-  TSwitchOutputPlugin = class(TAIMPCustomPlugin,
+  TSwitchOutputPlugin = class(TInterfacedObject,
     IAIMPActionEvent,
-    IAIMPExternalSettingsDialog)
+    IAIMPExternalSettingsDialog,
+    IAIMPPlugin)
   strict private const
     ActionID = 'aimp.switchoutput.action.id';
   strict private
+    FCore: IAIMPCore;
     FDeviceName1: IAIMPString;
     FDeviceName2: IAIMPString;
 
     function GetPlayerProps(ACore: IAIMPCore; out AProps: IAIMPPropertyList): Boolean;
     function IsRequiredApiAvailable(ACore: IAIMPCore): Boolean;
+    function MakeString(const S: UnicodeString): IAIMPString;
   protected
-    function Initialize(Core: IAIMPCore): HRESULT; override; stdcall;
-    function InfoGetCategories: Cardinal; override; stdcall;
-    function InfoGet(Index: Integer): PWideChar; override; stdcall;
+    // IAIMPPlugin
+    procedure Finalize; virtual; stdcall;
+    function Initialize(Core: IAIMPCore): HRESULT; stdcall;
+    function InfoGetCategories: Cardinal; stdcall;
+    function InfoGet(Index: Integer): PWideChar; stdcall;
+    procedure SystemNotification(NotifyID: Integer; Data: IUnknown); virtual; stdcall;
     // IAIMPExternalSettingsDialog
     procedure Show(ParentWindow: HWND); stdcall;
     // IAIMPActionEvent
@@ -52,6 +56,11 @@ type
   end;
 
   { TSwitchOutputPlugin }
+
+  procedure TSwitchOutputPlugin.Finalize;
+  begin
+    FCore := nil;
+  end;
 
   function TSwitchOutputPlugin.GetPlayerProps(ACore: IAIMPCore; out AProps: IAIMPPropertyList): Boolean;
   var
@@ -89,19 +98,20 @@ type
     Result := E_FAIL;
     if IsRequiredApiAvailable(Core) then
     begin
-      Result := inherited;
-      Core.CreateObject(IID_IAIMPAction, LAction);
+      FCore := Core;
+      FCore.CreateObject(IID_IAIMPAction, LAction);
       LAction.SetValueAsObject(AIMP_ACTION_PROPID_ID, MakeString(ActionID));
       LAction.SetValueAsObject(AIMP_ACTION_PROPID_NAME, MakeString('Switch to another output device'));
       LAction.SetValueAsObject(AIMP_ACTION_PROPID_GROUPNAME, MakeString('Output device'));
       LAction.SetValueAsObject(AIMP_ACTION_PROPID_EVENT, Self);
-      Core.RegisterExtension(IAIMPServiceActionManager, LAction);
+      FCore.RegisterExtension(IAIMPServiceActionManager, LAction);
 
-      if CoreGetService(IAIMPServiceConfig, LConfig) then
+      if Succeeded(FCore.QueryInterface(IAIMPServiceConfig, LConfig)) then
       begin
         LConfig.GetValueAsString(MakeString('SwitchOutput\Device1'), FDeviceName1);
         LConfig.GetValueAsString(MakeString('SwitchOutput\Device2'), FDeviceName2);
       end;
+      Result := S_OK;
     end;
   end;
 
@@ -114,13 +124,21 @@ type
       Succeeded(LList.GetValueAsObject(AIMP_PLAYER_PROPID_OUTPUT, IAIMPString, LTemp));
   end;
 
+  function TSwitchOutputPlugin.MakeString(const S: UnicodeString): IAIMPString;
+  begin
+    if Succeeded(FCore.CreateObject(IAIMPString, Result)) then
+      Result.SetData(PWideChar(S), Length(S))
+    else
+      Result := nil;
+  end;
+
   procedure TSwitchOutputPlugin.OnExecute(Data: IInterface);
   var
     LCompareResult: Integer;
     LDevice: IAIMPString;
     LProps: IAIMPPropertyList;
   begin
-    if GetPlayerProps(CoreIntf, LProps) then
+    if GetPlayerProps(FCore, LProps) then
     begin
       if Succeeded(LProps.GetValueAsObject(AIMP_PLAYER_PROPID_OUTPUT, IAIMPString, LDevice)) then
       begin
@@ -173,10 +191,10 @@ type
     LFormPos: TRect;
     LProps: IAIMPPropertyList;
   begin
-    if CoreGetService(IAIMPServiceUI, LService) then
+    if Succeeded(FCore.QueryInterface(IAIMPServiceUI, LService)) then
     begin
       LDevices := nil;
-      if GetPlayerProps(CoreIntf, LProps) then
+      if GetPlayerProps(FCore, LProps) then
       begin
         if Failed(LProps.GetValueAsObject(AIMP_PLAYER_PROPID_OUTPUT, IAIMPObjectList, LDevices)) then
           LDevices := nil;
@@ -211,7 +229,7 @@ type
         begin
           LDevice1.GetValueAsObject(AIMPUI_COMBOBOX_PROPID_TEXT, IAIMPString, FDeviceName1);
           LDevice2.GetValueAsObject(AIMPUI_COMBOBOX_PROPID_TEXT, IAIMPString, FDeviceName2);
-          if CoreGetService(IAIMPServiceConfig, LConfig) then
+          if Succeeded(FCore.QueryInterface(IAIMPServiceConfig, LConfig)) then
           begin
             LConfig.SetValueAsString(MakeString('SwitchOutput\Device1'), FDeviceName1);
             LConfig.SetValueAsString(MakeString('SwitchOutput\Device2'), FDeviceName2);
@@ -221,6 +239,11 @@ type
         LForm.Release(True);
       end;
     end;
+  end;
+
+  procedure TSwitchOutputPlugin.SystemNotification(NotifyID: Integer; Data: IInterface);
+  begin
+    // do nothing
   end;
 
   { AIMPPluginGetHeader }
