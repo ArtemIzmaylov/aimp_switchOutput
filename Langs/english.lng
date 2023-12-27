@@ -1,0 +1,8 @@
+[Common]
+aimp.switchoutput.action.toggle=Switch to another output device
+aimp.switchoutput.action.toggle.g=Player
+aimp.switchoutput.dlg.settings=SwitchOutput Plugin - Settings
+aimp.switchoutput.dlg.device1=Device 1:
+aimp.switchoutput.dlg.device2=Device 2:
+aimp.switchoutput.dlg.hotkeyhint=[!] Refer to app Settings\Player\Hotkeys to setup a hotkey
+aimp.switchoutput.dlg.ok=ОК

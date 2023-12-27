@@ -5,7 +5,7 @@
         <FrameworkType>None</FrameworkType>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Release</Config>
-        <Platform Condition="'$(Platform)'==''">Win64</Platform>
+        <Platform Condition="'$(Platform)'==''">Win32</Platform>
         <TargetedPlatforms>3</TargetedPlatforms>
         <AppType>Library</AppType>
         <MainSource>aimp_switchOutput.dpr</MainSource>
@@ -69,14 +69,15 @@
         <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;$(DCC_Namespace)</DCC_Namespace>
         <SanitizedProjectName>aimp_switchOutput</SanitizedProjectName>
         <VerInfo_Locale>1049</VerInfo_Locale>
-        <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=;FileDescription=aimp_switchOutput.dll;FileVersion=1.0.0.0;InternalName=;LegalCopyright=Artem Izmaylov;LegalTrademarks=;OriginalFilename=aimp_switchOutput.dll;ProgramID=;ProductName=AIMP;ProductVersion=5.30.2533;Comments=</VerInfo_Keys>
         <DCC_GenerateStackFrames>true</DCC_GenerateStackFrames>
+        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
+        <VerInfo_DLL>true</VerInfo_DLL>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
         <DCC_UsePackage>AFA.Components;vclwinx;fmx;DbxCommonDriver;vclie;bindengine;IndyIPCommon;VCLRESTComponents;FireDACCommonODBC;cxExportRS28;FireDACCommonDriver;dxHttpIndyRequestRS28;IndyProtocols;appanalytics;vclx;IndyIPClient;dbxcds;vcledge;cxLibraryRS28;dxCloudServiceLibraryRS28;bindcompvclwinx;dxGDIPlusRS28;bindcompfmx;madBasic_;dxCoreRS28;inetdb;dxSpreadSheetCoreRS28;FireDACSqliteDriver;DbxClientDriver;dxSpreadSheetRS28;dxTabbedMDIRS28;dxSkinsCoreRS28;soapmidas;dxBarRS28;vclactnband;dxADOServerModeRS28;fmxFireDAC;dbexpress;dxFireDACServerModeRS28;DBXMySQLDriver;VclSmp;inet;dxServerModeRS28;fmxase;vcltouch;cxTreeListRS28;dxBarDBNavRS28;dbrtl;fmxdae;FireDACMSAccDriver;CustomIPTransport;dxSpreadSheetReportDesignerRS28;dxChartControlRS28;DBXInterBaseDriver;dxComnRS28;vcldsnap;madExcept_;IndySystem;dxSpreadSheetConditionalFormattingDialogsRS28;GuidHelperPackage;cxFireDACAdaptersRS28;vcldb;dxDBXServerModeRS28;dxRibbonRS28;dxmdsRS28;vclFireDAC;madDisAsm_;AIMPSEPackage;bindcomp;FireDACCommon;dxRibbonCustomizationFormRS28;IndyCore;RESTBackendComponents;dxBarExtDBItemsRS28;bindcompdbx;cxTreeListdxBarPopupMenuRS28;rtl;FireDACMySQLDriver;dxDockingRS28;FireDACADSDriver;RESTComponents;DBXSqliteDriver;vcl;IndyIPServer;dsnapxml;dsnapcon;adortl;dxBarExtItemsRS28;dxSpreadSheetCoreConditionalFormattingDialogsRS28;dxSpellCheckerRS28;vclimg;FireDACPgDriver;FireDAC;inetdbxpress;xmlrtl;tethering;cxADOAdaptersRS28;bindcompvcl;dsnap;CloudService;fmxobj;bindcompvclsmp;soaprtl;soapserver;FireDACIBDriver;$(DCC_UsePackage)</DCC_UsePackage>
         <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
         <BT_BuildType>Debug</BT_BuildType>
-        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <Manifest_File>(None)</Manifest_File>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <AppDPIAwarenessMode>none</AppDPIAwarenessMode>
@@ -85,7 +86,6 @@
         <DCC_UsePackage>vclwinx;fmx;DbxCommonDriver;vclie;bindengine;IndyIPCommon;VCLRESTComponents;FireDACCommonODBC;cxExportRS28;FireDACCommonDriver;dxHttpIndyRequestRS28;IndyProtocols;appanalytics;vclx;IndyIPClient;dbxcds;vcledge;cxLibraryRS28;dxCloudServiceLibraryRS28;bindcompvclwinx;dxGDIPlusRS28;bindcompfmx;dxCoreRS28;inetdb;dxSpreadSheetCoreRS28;FireDACSqliteDriver;DbxClientDriver;dxSpreadSheetRS28;dxTabbedMDIRS28;dxSkinsCoreRS28;soapmidas;dxBarRS28;vclactnband;dxADOServerModeRS28;fmxFireDAC;dbexpress;dxFireDACServerModeRS28;DBXMySQLDriver;VclSmp;inet;dxServerModeRS28;fmxase;vcltouch;cxTreeListRS28;dxBarDBNavRS28;dbrtl;fmxdae;FireDACMSAccDriver;CustomIPTransport;dxSpreadSheetReportDesignerRS28;dxChartControlRS28;DBXInterBaseDriver;dxComnRS28;vcldsnap;IndySystem;dxSpreadSheetConditionalFormattingDialogsRS28;cxFireDACAdaptersRS28;vcldb;dxDBXServerModeRS28;dxRibbonRS28;dxmdsRS28;vclFireDAC;bindcomp;FireDACCommon;dxRibbonCustomizationFormRS28;IndyCore;RESTBackendComponents;dxBarExtDBItemsRS28;bindcompdbx;cxTreeListdxBarPopupMenuRS28;rtl;FireDACMySQLDriver;dxDockingRS28;FireDACADSDriver;RESTComponents;DBXSqliteDriver;vcl;IndyIPServer;dsnapxml;dsnapcon;adortl;dxBarExtItemsRS28;dxSpreadSheetCoreConditionalFormattingDialogsRS28;dxSpellCheckerRS28;vclimg;FireDACPgDriver;FireDAC;inetdbxpress;xmlrtl;tethering;cxADOAdaptersRS28;bindcompvcl;dsnap;CloudService;fmxobj;bindcompvclsmp;soaprtl;soapserver;FireDACIBDriver;$(DCC_UsePackage)</DCC_UsePackage>
         <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;$(DCC_Namespace)</DCC_Namespace>
         <BT_BuildType>Debug</BT_BuildType>
-        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <Manifest_File>(None)</Manifest_File>
         <AppDPIAwarenessMode>none</AppDPIAwarenessMode>
@@ -102,11 +102,9 @@
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
         <Debugger_HostApplication>$(AIMPBIN)\Win32\AIMP.exe</Debugger_HostApplication>
-        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
-        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
@@ -116,7 +114,6 @@
         <DCC_DebugInformation>0</DCC_DebugInformation>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
-        <DCC_ExeOutput>D:\Projects\AIMP\AIMP4Windows\trunk\AIMP\Binary\Win32\Plugins\aimp_switchOutput\</DCC_ExeOutput>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
     </PropertyGroup>

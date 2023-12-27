@@ -20,6 +20,8 @@ uses
   apiActions,
   apiCore,
   apiGUI,
+  apiMessages,
+  apiMUI,
   apiObjects,
   apiPlayer,
   apiPlugin;
@@ -33,8 +35,9 @@ type
     IAIMPExternalSettingsDialog,
     IAIMPPlugin)
   strict private const
-    ActionID = 'aimp.switchoutput.action.id';
+    ActionID = 'aimp.switchoutput.action.toggle';
   strict private
+    FAction: IAIMPAction;
     FCore: IAIMPCore;
     FDeviceName1: IAIMPString;
     FDeviceName2: IAIMPString;
@@ -42,7 +45,7 @@ type
     function GetPlayerProps(ACore: IAIMPCore; out AProps: IAIMPPropertyList): Boolean;
     function IsRequiredApiAvailable(ACore: IAIMPCore): Boolean;
     function MakeString(const S: UnicodeString): IAIMPString;
-  protected
+  public
     // IAIMPPlugin
     procedure Finalize; virtual; stdcall;
     function Initialize(Core: IAIMPCore): HRESULT; stdcall;
@@ -59,7 +62,31 @@ type
 
   procedure TSwitchOutputPlugin.Finalize;
   begin
+    FAction := nil;
     FCore := nil;
+  end;
+
+  function TSwitchOutputPlugin.Initialize(Core: IAIMPCore): HRESULT;
+  var
+    LConfig: IAIMPServiceConfig;
+  begin
+    Result := E_FAIL;
+    if IsRequiredApiAvailable(Core) then
+    begin
+      FCore := Core;
+      if Succeeded(FCore.CreateObject(IID_IAIMPAction, FAction)) then
+      begin
+        FAction.SetValueAsObject(AIMP_ACTION_PROPID_ID, MakeString(ActionID));
+        FAction.SetValueAsObject(AIMP_ACTION_PROPID_EVENT, Self);
+        FCore.RegisterExtension(IAIMPServiceActionManager, FAction);
+      end;
+      if Succeeded(FCore.QueryInterface(IAIMPServiceConfig, LConfig)) then
+      begin
+        LConfig.GetValueAsString(MakeString('SwitchOutput\Device1'), FDeviceName1);
+        LConfig.GetValueAsString(MakeString('SwitchOutput\Device2'), FDeviceName2);
+      end;
+      Result := S_OK;
+    end;
   end;
 
   function TSwitchOutputPlugin.GetPlayerProps(ACore: IAIMPCore; out AProps: IAIMPPropertyList): Boolean;
@@ -75,7 +102,7 @@ type
   begin
     case Index of
       AIMP_PLUGIN_INFO_NAME:
-        Result := 'SwitchOutput v0.1b';
+        Result := 'SwitchOutput v1.0';
       AIMP_PLUGIN_INFO_AUTHOR:
         Result := 'Artem Izmaylov';
       AIMP_PLUGIN_INFO_SHORT_DESCRIPTION:
@@ -88,31 +115,6 @@ type
   function TSwitchOutputPlugin.InfoGetCategories: Cardinal;
   begin
     Result := AIMP_PLUGIN_CATEGORY_ADDONS;
-  end;
-
-  function TSwitchOutputPlugin.Initialize(Core: IAIMPCore): HRESULT;
-  var
-    LAction: IAIMPAction;
-    LConfig: IAIMPServiceConfig;
-  begin
-    Result := E_FAIL;
-    if IsRequiredApiAvailable(Core) then
-    begin
-      FCore := Core;
-      FCore.CreateObject(IID_IAIMPAction, LAction);
-      LAction.SetValueAsObject(AIMP_ACTION_PROPID_ID, MakeString(ActionID));
-      LAction.SetValueAsObject(AIMP_ACTION_PROPID_NAME, MakeString('Switch to another output device'));
-      LAction.SetValueAsObject(AIMP_ACTION_PROPID_GROUPNAME, MakeString('Output device'));
-      LAction.SetValueAsObject(AIMP_ACTION_PROPID_EVENT, Self);
-      FCore.RegisterExtension(IAIMPServiceActionManager, LAction);
-
-      if Succeeded(FCore.QueryInterface(IAIMPServiceConfig, LConfig)) then
-      begin
-        LConfig.GetValueAsString(MakeString('SwitchOutput\Device1'), FDeviceName1);
-        LConfig.GetValueAsString(MakeString('SwitchOutput\Device2'), FDeviceName2);
-      end;
-      Result := S_OK;
-    end;
   end;
 
   function TSwitchOutputPlugin.IsRequiredApiAvailable(ACore: IAIMPCore): Boolean;
@@ -153,20 +155,22 @@ type
   procedure TSwitchOutputPlugin.Show(ParentWindow: HWND);
   const
     FormHeight = 200;
-    FormWidth = 340;
+    FormWidth = 400;
   var
     LForm: IAIMPUIForm;
     LService: IAIMPServiceUI;
+    LServiceMUI: IAIMPServiceMUI;
 
-    procedure AddLabel(const ACaption: string);
+    procedure AddLabel(const ACaption: IAIMPString);
     var
       LLabel: IAIMPUILabel;
     begin
       if Succeeded(LService.CreateControl(LForm, LForm, nil, nil, IAIMPUILabel, LLabel)) then
       begin
         LLabel.SetValueAsInt32(AIMPUI_LABEL_PROPID_AUTOSIZE, 1);
-        LLabel.SetValueAsObject(AIMPUI_LABEL_PROPID_TEXT, MakeString(ACaption));
-        LLabel.SetPlacement(TAIMPUIControlPlacement.Create(ualTop, 0));
+        //LLabel.SetValueAsInt32(AIMPUI_LABEL_PROPID_WORDWRAP, 1);
+        LLabel.SetValueAsObject(AIMPUI_LABEL_PROPID_TEXT, ACaption);
+        LLabel.SetPlacement(TAIMPUIControlPlacement.Create(ualTop, 0, TRect.Create(3, 3, 3, 0)));
       end;
     end;
 
@@ -182,6 +186,12 @@ type
       end;
     end;
 
+    function Localize(const ID: string): IAIMPString;
+    begin
+      if Failed(LServiceMUI.GetValue(MakeString('Common\aimp.switchoutput.dlg.' + ID), Result)) then
+        Result := nil;
+    end;
+
   var
     LButton: IAIMPUIButton;
     LConfig: IAIMPServiceConfig;
@@ -191,7 +201,8 @@ type
     LFormPos: TRect;
     LProps: IAIMPPropertyList;
   begin
-    if Succeeded(FCore.QueryInterface(IAIMPServiceUI, LService)) then
+    if Succeeded(FCore.QueryInterface(IAIMPServiceUI, LService)) and
+       Succeeded(FCore.QueryInterface(IAIMPServiceMUI, LServiceMUI)) then
     begin
       LDevices := nil;
       if GetPlayerProps(FCore, LProps) then
@@ -208,21 +219,21 @@ type
         LFormPos.Top := (LFormPos.Top + LFormPos.Bottom - FormHeight) div 2;
         LFormPos.Height := FormHeight;
         LForm.SetPlacement(TAIMPUIControlPlacement.Create(LFormPos));
-        LForm.SetValueAsObject(AIMPUI_FORM_PROPID_CAPTION, MakeString('Settings'));
+        LForm.SetValueAsObject(AIMPUI_FORM_PROPID_CAPTION, Localize('Settings'));
         LForm.SetValueAsInt32(AIMPUI_FORM_PROPID_BORDERSTYLE, AIMPUI_FLAGS_BORDERSTYLE_DIALOG);
         LForm.SetValueAsInt32(AIMPUI_FORM_PROPID_PADDING, 8);
 
-        AddLabel('Device 1:');
+        AddLabel(Localize('device1'));
         LDevice1 := AddComboBox(LDevices, FDeviceName1);
-        AddLabel('Device 2:');
+        AddLabel(Localize('device2'));
         LDevice2 := AddComboBox(LDevices, FDeviceName2);
-        AddLabel('[!] Refer to app Settings\Player\Hotkeys to setup a hotkey');
+        AddLabel(Localize('hotkeyHint'));
 
         if Succeeded(LService.CreateControl(LForm, LForm, nil, nil, IAIMPUIButton, LButton)) then
         begin
           LButton.SetValueAsInt32(AIMPUI_BUTTON_PROPID_MODALRESULT, idOK);
-          LButton.SetValueAsObject(AIMPUI_BUTTON_PROPID_CAPTION, MakeString('Œ '));
-          LButton.SetPlacement(TAIMPUIControlPlacement.Create(ualBottom, 25, TRect.Create(200, 0, 0, 0)));
+          LButton.SetValueAsObject(AIMPUI_BUTTON_PROPID_CAPTION, Localize('ok'));
+          LButton.SetPlacement(TAIMPUIControlPlacement.Create(ualBottom, 25, TRect.Create(280, 0, 0, 0)));
         end;
 
         if LForm.ShowModal = idOK then
