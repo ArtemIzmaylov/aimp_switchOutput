@@ -138,16 +138,48 @@ type
   var
     LCompareResult: Integer;
     LDevice: IAIMPString;
+    LMessage: IAIMPString;
     LProps: IAIMPPropertyList;
+    LServiceMsg: IAIMPServiceMessageDispatcher;
+    LServiceMui: IAIMPServiceMUI;
+    LWinHandle: HWND;
   begin
+    // Show the Settings Dialog if devices are not specified
+    if (FDeviceName1 = nil) or (FDeviceName1.GetLength = 0) or
+       (FDeviceName2 = nil) or (FDeviceName2.GetLength = 0) then
+    begin
+      if FCore.QueryInterface(IAIMPServiceMessageDispatcher, LServiceMsg) = S_OK then
+      begin
+        if LServiceMsg.Send(AIMP_MSG_PROPERTY_HWND, AIMP_MSG_PROPVALUE_GET, @LWinHandle) = S_OK then
+          Show(LWinHandle);
+      end;
+      Exit;
+    end;
+
+    // Toggle the outputs
     if GetPlayerProps(FCore, LProps) then
     begin
-      if Succeeded(LProps.GetValueAsObject(AIMP_PLAYER_PROPID_OUTPUT, IAIMPString, LDevice)) then
+      if LProps.GetValueAsObject(AIMP_PLAYER_PROPID_OUTPUT, IAIMPString, LDevice) = S_OK then
       begin
-        if Succeeded(LDevice.Compare(FDeviceName1, LCompareResult, True)) and (LCompareResult = 0) then
-          LProps.SetValueAsObject(AIMP_PLAYER_PROPID_OUTPUT, FDeviceName2)
+        if (LDevice.Compare(FDeviceName1, LCompareResult, True) = S_OK) and (LCompareResult = 0) then
+          LDevice := FDeviceName2
         else
-          LProps.SetValueAsObject(AIMP_PLAYER_PROPID_OUTPUT, FDeviceName1);
+          LDevice := FDeviceName1;
+
+        // Set and notify
+        if LProps.SetValueAsObject(AIMP_PLAYER_PROPID_OUTPUT, LDevice) = S_OK then
+        begin
+          // Post the notification
+          LMessage := nil;
+          if FCore.QueryInterface(IAIMPServiceMUI, LServiceMui) = S_OK then
+            LServiceMui.GetValue(MakeString('OptionsSoundOutFrame\L2'), LMessage);
+          if LMessage = nil then
+            LMessage := MakeString('Output:');
+          LMessage.Add2(' ', 1);
+          LMessage.Add(LDevice);
+          if FCore.QueryInterface(IAIMPServiceMessageDispatcher, LServiceMsg) = S_OK then
+            LServiceMsg.Send(AIMP_MSG_CMD_SHOW_NOTIFICATION, 0, LMessage.GetData);
+        end;
       end;
     end;
   end;
