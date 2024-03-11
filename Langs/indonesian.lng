@@ -4,5 +4,5 @@ aimp.switchoutput.action.toggle.g=Pemutar
 aimp.switchoutput.dlg.settings=Pengaya SwitchOutput - Pengaturan
 aimp.switchoutput.dlg.device1=Perangkat 1:
 aimp.switchoutput.dlg.device2=Perangkat 2:
-aimp.switchoutput.dlg.hotkeyhint=[!] Silahkan merujuk ke Pengaturan aplikasi\Pemutar\Tombol Pintasan untuk mengatur tombol pintasan
+aimp.switchoutput.dlg.hotkeyhint=[!] Silahkan merujuk ke Pengaturan aplikasi\Pemutar\Tombol Pintasan untuk mengatur pintasannya
 aimp.switchoutput.dlg.ok=OK
