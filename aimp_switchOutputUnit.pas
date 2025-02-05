@@ -23,6 +23,7 @@ uses
   apiMessages,
   apiMUI,
   apiObjects,
+  apiOptions,
   apiPlayer,
   apiPlugin;
 
@@ -56,6 +57,20 @@ type
     procedure Show(ParentWindow: HWND); stdcall;
     // IAIMPActionEvent
     procedure OnExecute(Data: IUnknown); stdcall;
+  end;
+
+  { TSwitchOutputOpenHotkeysAction }
+
+  TSwitchOutputOpenHotkeysAction = class(TInterfacedObject, IAIMPUIChangeEvents)
+  strict private
+    FCore: IAIMPCore;
+    FForm: IAIMPUIForm;
+
+    function MakeString(const S: UnicodeString): IAIMPString;
+  public
+    class function CreateIfAvailable(ACore: IAIMPCore; AForm: IAIMPUIForm): IAIMPUIChangeEvents;
+    // IAIMPUIChangeEvents
+    procedure OnChanged(Sender: IInterface); stdcall;
   end;
 
 function AIMPPluginGetHeader(out Header: IAIMPPlugin): HRESULT; stdcall;
@@ -206,16 +221,23 @@ var
   LService: IAIMPServiceUI;
   LServiceMUI: IAIMPServiceMUI;
 
-  procedure AddLabel(const ACaption: IAIMPString);
+  function Localize(const ID: string): IAIMPString;
+  begin
+    if Failed(LServiceMUI.GetValue(MakeString('Common\aimp.switchoutput.dlg.' + ID), Result)) then
+      Result := nil;
+  end;
+
+  procedure AddLabel(const ACaption: IAIMPString; AHandler: IUnknown = nil);
   var
     LLabel: IAIMPUILabel;
   begin
-    if Succeeded(LService.CreateControl(LForm, LForm, nil, nil, IAIMPUILabel, LLabel)) then
+    if Succeeded(LService.CreateControl(LForm, LForm, nil, AHandler, IAIMPUILabel, LLabel)) then
     begin
       LLabel.SetValueAsInt32(AIMPUI_LABEL_PROPID_AUTOSIZE, 1);
-      //LLabel.SetValueAsInt32(AIMPUI_LABEL_PROPID_WORDWRAP, 1);
       LLabel.SetValueAsObject(AIMPUI_LABEL_PROPID_TEXT, ACaption);
       LLabel.SetPlacement(TAIMPUIControlPlacement.Create(ualTop, 0, TRect.Create(3, 3, 3, 0)));
+      if AHandler <> nil then
+        LLabel.SetValueAsObject(AIMPUI_LABEL_PROPID_URL, MakeString('_'));
     end;
   end;
 
@@ -229,12 +251,6 @@ var
       Result.SetValueAsInt32(AIMPUI_COMBOBOX_PROPID_AUTOCOMPLETE, 1);
       Result.SetPlacement(TAIMPUIControlPlacement.Create(ualTop, 0));
     end;
-  end;
-
-  function Localize(const ID: string): IAIMPString;
-  begin
-    if Failed(LServiceMUI.GetValue(MakeString('Common\aimp.switchoutput.dlg.' + ID), Result)) then
-      Result := nil;
   end;
 
 var
@@ -272,7 +288,8 @@ begin
       LDevice1 := AddComboBox(LDevices, FDeviceName1);
       AddLabel(Localize('device2'));
       LDevice2 := AddComboBox(LDevices, FDeviceName2);
-      AddLabel(Localize('hotkeyHint'));
+      AddLabel(Localize('hotkeyHint'),
+        TSwitchOutputOpenHotkeysAction.CreateIfAvailable(FCore, LForm));
 
       if Succeeded(LService.CreateControl(LForm, LForm, nil, nil, IAIMPUIButton, LButton)) then
       begin
@@ -302,4 +319,76 @@ begin
   // do nothing
 end;
 
+{ TSwitchOutputOpenHotkeysAction }
+
+class function TSwitchOutputOpenHotkeysAction.CreateIfAvailable(
+  ACore: IAIMPCore; AForm: IAIMPUIForm): IAIMPUIChangeEvents;
+var
+  LInstance: TSwitchOutputOpenHotkeysAction;
+  LService: IAIMPServiceVersionInfo;
+begin
+  Result := nil;
+  if Succeeded(ACore.QueryInterface(IAIMPServiceVersionInfo, LService)) then
+  begin
+    if LService.GetBuildNumber >= 2400 then // Required API is available since v5.40
+    begin
+      LInstance := TSwitchOutputOpenHotkeysAction.Create;
+      LInstance.FCore := ACore;
+      LInstance.FForm := AForm;
+      Result := LInstance;
+    end;
+  end;
+end;
+
+function TSwitchOutputOpenHotkeysAction.MakeString(const S: UnicodeString): IAIMPString;
+begin
+  if Succeeded(FCore.CreateObject(IAIMPString, Result)) then
+    Result.SetData(PWideChar(S), Length(S))
+  else
+    Result := nil;
+end;
+
+procedure TSwitchOutputOpenHotkeysAction.OnChanged(Sender: IInterface);
+
+  function GetActionTitle: IAIMPString;
+  var
+    LService: IAIMPServiceMUI;
+  begin
+    Result := nil;
+    if Succeeded(FCore.QueryInterface(IAIMPServiceMUI, LService)) then
+      LService.GetValue(MakeString('Common\aimp.switchoutput.action.toggle'), Result);
+  end;
+
+var
+  LRequest: IAIMPConfig;
+  LService: IAIMPServiceOptionsDialog;
+begin
+  if Succeeded(FCore.QueryInterface(IAIMPServiceOptionsDialog, LService)) then
+  begin
+    FCore.CreateObject(IAIMPConfig, LRequest);
+    LRequest.SetValueAsString(MakeString(AIMP_OPT_FRAME_ID), MakeString('20'));
+    LRequest.SetValueAsString(MakeString('OptionsFrameHotkeys\Search'), GetActionTitle);
+    LService.FrameShow(LRequest, True);
+    FForm.Close;
+  end;
+end;
+
+//{ TSwitchOutputSettingsDialog }
+//
+//constructor TSwitchOutputSettingsDialog.Create(ACore: IAIMPCore; AForm: IAIMPUIForm);
+//begin
+//
+//end;
+//
+//destructor TSwitchOutputSettingsDialog.Destroy;
+//begin
+//
+//  inherited;
+//end;
+//
+//function TSwitchOutputSettingsDialog.MakeString(const S: UnicodeString): IAIMPString;
+//begin
+//
+//end;
+//
 end.
