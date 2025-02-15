@@ -6,3 +6,5 @@ aimp.switchoutput.dlg.device1=Device 1:
 aimp.switchoutput.dlg.device2=Device 2:
 aimp.switchoutput.dlg.hotkeyhint=[!] Refer to app Settings\Player\Hotkeys to setup a hotkey
 aimp.switchoutput.dlg.ok=ОК
+aimp.switch.err.failed=Cannot switch to %s
+aimp.switch.err.unavailable=%s is unavailable

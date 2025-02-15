@@ -1,14 +1,15 @@
-﻿{**********************************************}
-{*                                            *}
-{*           Plugin for AIMP v5.30            *}
-{* Switches between output devices via hotkey *}
-{*                                            *}
-{*            (c) Artem Izmaylov              *}
-{*                 2023-2024                  *}
-{*                www.aimp.ru                 *}
-{*                                            *}
-{**********************************************}
-
+﻿////////////////////////////////////////////////////////////////////////////////
+//
+//  Project:   SwitchOutput plugin
+//
+//  Target:    AIMP v5.40 build 2400
+//
+//  Purpose:   Switches between output devices via hotkey
+//
+//  Author:    Artem Izmaylov
+//             © 2023-2025
+//             www.aimp.ru
+//
 unit aimp_switchOutputUnit;
 
 {$I aimp_switchOutput.inc}
@@ -25,7 +26,8 @@ uses
   apiObjects,
   apiOptions,
   apiPlayer,
-  apiPlugin;
+  apiPlugin,
+  apiWrappers;
 
 type
 
@@ -39,19 +41,20 @@ type
     ActionID = 'aimp.switchoutput.action.toggle';
   strict private
     FAction: IAIMPAction;
-    FCore: IAIMPCore;
     FDeviceName1: IAIMPString;
     FDeviceName2: IAIMPString;
 
     function GetPlayerProps(ACore: IAIMPCore; out AProps: IAIMPPropertyList): Boolean;
+    function IsDeviceAvailable(const ADevice: IAIMPString): Boolean;
     function IsRequiredApiAvailable(ACore: IAIMPCore): Boolean;
-    function MakeString(const S: UnicodeString): IAIMPString;
+    procedure PostNotification(const AText: string); overload;
+    procedure PostNotification(const ATextId: string; const ADevice: IAIMPString); overload;
   public
     // IAIMPPlugin
     procedure Finalize; virtual; stdcall;
     function Initialize(Core: IAIMPCore): HRESULT; stdcall;
     function InfoGetCategories: Cardinal; stdcall;
-    function InfoGet(Index: Integer): PWideChar; stdcall;
+    function InfoGet(Index: Integer): PChar; stdcall;
     procedure SystemNotification(NotifyID: Integer; Data: IUnknown); virtual; stdcall;
     // IAIMPExternalSettingsDialog
     procedure Show(ParentWindow: HWND); stdcall;
@@ -65,8 +68,6 @@ type
   strict private
     FCore: IAIMPCore;
     FForm: IAIMPUIForm;
-
-    function MakeString(const S: UnicodeString): IAIMPString;
   public
     class function CreateIfAvailable(ACore: IAIMPCore; AForm: IAIMPUIForm): IAIMPUIChangeEvents;
     // IAIMPUIChangeEvents
@@ -75,6 +76,9 @@ type
 
 function AIMPPluginGetHeader(out Header: IAIMPPlugin): HRESULT; stdcall;
 implementation
+
+uses
+  SysUtils;
 
 function AIMPPluginGetHeader(out Header: IAIMPPlugin): HRESULT; stdcall;
 begin
@@ -91,7 +95,7 @@ end;
 procedure TSwitchOutputPlugin.Finalize;
 begin
   FAction := nil;
-  FCore := nil;
+  TAIMPAPIWrappers.Finalize;
 end;
 
 function TSwitchOutputPlugin.Initialize(Core: IAIMPCore): HRESULT;
@@ -101,14 +105,14 @@ begin
   Result := E_FAIL;
   if IsRequiredApiAvailable(Core) then
   begin
-    FCore := Core;
-    if Succeeded(FCore.CreateObject(IID_IAIMPAction, FAction)) then
+    TAIMPAPIWrappers.Initialize(Core);
+    if Succeeded(Core.CreateObject(IID_IAIMPAction, FAction)) then
     begin
       FAction.SetValueAsObject(AIMP_ACTION_PROPID_ID, MakeString(ActionID));
       FAction.SetValueAsObject(AIMP_ACTION_PROPID_EVENT, Self);
-      FCore.RegisterExtension(IAIMPServiceActionManager, FAction);
+      Core.RegisterExtension(IAIMPServiceActionManager, FAction);
     end;
-    if Succeeded(FCore.QueryInterface(IAIMPServiceConfig, LConfig)) then
+    if Succeeded(Core.QueryInterface(IAIMPServiceConfig, LConfig)) then
     begin
       LConfig.GetValueAsString(MakeString('SwitchOutput\Device1'), FDeviceName1);
       LConfig.GetValueAsString(MakeString('SwitchOutput\Device2'), FDeviceName2);
@@ -126,11 +130,11 @@ begin
     Succeeded(LService.QueryInterface(IAIMPPropertyList, AProps));
 end;
 
-function TSwitchOutputPlugin.InfoGet(Index: Integer): PWideChar;
+function TSwitchOutputPlugin.InfoGet(Index: Integer): PChar;
 begin
   case Index of
     AIMP_PLUGIN_INFO_NAME:
-      Result := 'SwitchOutput v1.0';
+      Result := 'SwitchOutput v1.0.1';
     AIMP_PLUGIN_INFO_AUTHOR:
       Result := 'Artem Izmaylov';
     AIMP_PLUGIN_INFO_SHORT_DESCRIPTION:
@@ -145,6 +149,29 @@ begin
   Result := AIMP_PLUGIN_CATEGORY_ADDONS;
 end;
 
+function TSwitchOutputPlugin.IsDeviceAvailable(const ADevice: IAIMPString): Boolean;
+var
+  I: Integer;
+  LCompareResult: Integer;
+  LDevices: IAIMPObjectList;
+  LItem: IAIMPString;
+  LProps: IAIMPPropertyList;
+begin
+  Result := False;
+  if GetPlayerProps(CoreIntf, LProps) then
+  begin
+    if LProps.GetValueAsObject(AIMP_PLAYER_PROPID_OUTPUT, IAIMPObjectList, LDevices) = S_OK then
+    begin
+      for I := 0 to LDevices.GetCount - 1 do
+        if Succeeded(LDevices.GetObject(I, IAIMPString, LItem)) and
+          (ADevice.Compare(LItem, LCompareResult, True) = S_OK) and
+          (LCompareResult = 0)
+        then
+          Exit(True);
+    end;
+  end;
+end;
+
 function TSwitchOutputPlugin.IsRequiredApiAvailable(ACore: IAIMPCore): Boolean;
 var
   LList: IAIMPPropertyList;
@@ -154,62 +181,62 @@ begin
     Succeeded(LList.GetValueAsObject(AIMP_PLAYER_PROPID_OUTPUT, IAIMPString, LTemp));
 end;
 
-function TSwitchOutputPlugin.MakeString(const S: UnicodeString): IAIMPString;
-begin
-  if Succeeded(FCore.CreateObject(IAIMPString, Result)) then
-    Result.SetData(PWideChar(S), Length(S))
-  else
-    Result := nil;
-end;
-
 procedure TSwitchOutputPlugin.OnExecute(Data: IInterface);
 var
-  LCompareResult: Integer;
   LDevice: IAIMPString;
-  LMessage: IAIMPString;
-  LProps: IAIMPPropertyList;
-  LServiceMsg: IAIMPServiceMessageDispatcher;
-  LServiceMui: IAIMPServiceMUI;
-  LWinHandle: HWND;
+  LPlayer: IAIMPPropertyList;
+  LResult: Integer;
 begin
   // Show the Settings Dialog if devices are not specified
   if (FDeviceName1 = nil) or (FDeviceName1.GetLength = 0) or
      (FDeviceName2 = nil) or (FDeviceName2.GetLength = 0) then
   begin
-    if FCore.QueryInterface(IAIMPServiceMessageDispatcher, LServiceMsg) = S_OK then
-    begin
-      if LServiceMsg.Send(AIMP_MSG_PROPERTY_HWND, AIMP_MSG_PROPVALUE_GET, @LWinHandle) = S_OK then
-        Show(LWinHandle);
-    end;
+    Show(MainWindowGetHandle);
     Exit;
   end;
 
   // Toggle the outputs
-  if GetPlayerProps(FCore, LProps) then
+  if GetPlayerProps(CoreIntf, LPlayer) then
   begin
-    if LProps.GetValueAsObject(AIMP_PLAYER_PROPID_OUTPUT, IAIMPString, LDevice) = S_OK then
+    if LPlayer.GetValueAsObject(AIMP_PLAYER_PROPID_OUTPUT, IAIMPString, LDevice) = S_OK then
     begin
-      if (LDevice.Compare(FDeviceName1, LCompareResult, True) = S_OK) and (LCompareResult = 0) then
+      if (LDevice.Compare(FDeviceName1, LResult, True) = S_OK) and (LResult = 0) then
         LDevice := FDeviceName2
       else
         LDevice := FDeviceName1;
 
-      // Set and notify
-      if LProps.SetValueAsObject(AIMP_PLAYER_PROPID_OUTPUT, LDevice) = S_OK then
-      begin
-        // Post the notification
-        LMessage := nil;
-        if FCore.QueryInterface(IAIMPServiceMUI, LServiceMui) = S_OK then
-          LServiceMui.GetValue(MakeString('OptionsSoundOutFrame\L2'), LMessage);
-        if LMessage = nil then
-          LMessage := MakeString('Output:');
-        LMessage.Add2(' ', 1);
-        LMessage.Add(LDevice);
-        if FCore.QueryInterface(IAIMPServiceMessageDispatcher, LServiceMsg) = S_OK then
-          LServiceMsg.Send(AIMP_MSG_CMD_SHOW_NOTIFICATION, 0, LMessage.GetData);
-      end;
+      if not IsDeviceAvailable(LDevice) then
+        PostNotification('Common\aimp.switch.err.unavailable', LDevice)
+      else
+        if LPlayer.SetValueAsObject(AIMP_PLAYER_PROPID_OUTPUT, LDevice) = S_OK then
+          PostNotification('OptionsSoundOutFrame\L2', LDevice)
+        else
+          PostNotification('Common\aimp.switch.err.failed', LDevice);
     end;
   end;
+end;
+
+procedure TSwitchOutputPlugin.PostNotification(const AText: string);
+var
+  LServiceMsg: IAIMPServiceMessageDispatcher;
+begin
+  if CoreIntf.QueryInterface(IAIMPServiceMessageDispatcher, LServiceMsg) = S_OK then
+    LServiceMsg.Send(AIMP_MSG_CMD_SHOW_NOTIFICATION, 0, PChar(AText));
+end;
+
+procedure TSwitchOutputPlugin.PostNotification(const ATextId: string; const ADevice: IAIMPString);
+var
+  LText: string;
+begin
+  LText := LangLoadString(ATextId);
+  if LText = '' then
+    LText := ATextId;
+  if Pos('%s', LText) > 0 then
+    LText := Format(LText, [IAIMPStringToString(ADevice)])
+  else
+    LText := LText + ' ' + IAIMPStringToString(ADevice);
+
+  PostNotification(LText);
 end;
 
 procedure TSwitchOutputPlugin.Show(ParentWindow: HWND);
@@ -223,8 +250,7 @@ var
 
   function Localize(const ID: string): IAIMPString;
   begin
-    if Failed(LServiceMUI.GetValue(MakeString('Common\aimp.switchoutput.dlg.' + ID), Result)) then
-      Result := nil;
+    Result := LangLoadStringEx('Common\aimp.switchoutput.dlg.' + ID);
   end;
 
   procedure AddLabel(const ACaption: IAIMPString; AHandler: IUnknown = nil);
@@ -237,7 +263,7 @@ var
       LLabel.SetValueAsObject(AIMPUI_LABEL_PROPID_TEXT, ACaption);
       LLabel.SetPlacement(TAIMPUIControlPlacement.Create(ualTop, 0, TRect.Create(3, 3, 3, 0)));
       if AHandler <> nil then
-        LLabel.SetValueAsObject(AIMPUI_LABEL_PROPID_URL, MakeString('_'));
+        LLabel.SetValueAsObject(AIMPUI_LABEL_PROPID_URL, MakeString(' '));
     end;
   end;
 
@@ -262,11 +288,11 @@ var
   LFormPos: TRect;
   LProps: IAIMPPropertyList;
 begin
-  if Succeeded(FCore.QueryInterface(IAIMPServiceUI, LService)) and
-     Succeeded(FCore.QueryInterface(IAIMPServiceMUI, LServiceMUI)) then
+  if Succeeded(CoreIntf.QueryInterface(IAIMPServiceUI, LService)) and
+     Succeeded(CoreIntf.QueryInterface(IAIMPServiceMUI, LServiceMUI)) then
   begin
     LDevices := nil;
-    if GetPlayerProps(FCore, LProps) then
+    if GetPlayerProps(CoreIntf, LProps) then
     begin
       if Failed(LProps.GetValueAsObject(AIMP_PLAYER_PROPID_OUTPUT, IAIMPObjectList, LDevices)) then
         LDevices := nil;
@@ -288,8 +314,7 @@ begin
       LDevice1 := AddComboBox(LDevices, FDeviceName1);
       AddLabel(Localize('device2'));
       LDevice2 := AddComboBox(LDevices, FDeviceName2);
-      AddLabel(Localize('hotkeyHint'),
-        TSwitchOutputOpenHotkeysAction.CreateIfAvailable(FCore, LForm));
+      AddLabel(Localize('hotkeyHint'), TSwitchOutputOpenHotkeysAction.CreateIfAvailable(CoreIntf, LForm));
 
       if Succeeded(LService.CreateControl(LForm, LForm, nil, nil, IAIMPUIButton, LButton)) then
       begin
@@ -302,7 +327,7 @@ begin
       begin
         LDevice1.GetValueAsObject(AIMPUI_COMBOBOX_PROPID_TEXT, IAIMPString, FDeviceName1);
         LDevice2.GetValueAsObject(AIMPUI_COMBOBOX_PROPID_TEXT, IAIMPString, FDeviceName2);
-        if Succeeded(FCore.QueryInterface(IAIMPServiceConfig, LConfig)) then
+        if Succeeded(CoreIntf.QueryInterface(IAIMPServiceConfig, LConfig)) then
         begin
           LConfig.SetValueAsString(MakeString('SwitchOutput\Device1'), FDeviceName1);
           LConfig.SetValueAsString(MakeString('SwitchOutput\Device2'), FDeviceName2);
@@ -340,25 +365,7 @@ begin
   end;
 end;
 
-function TSwitchOutputOpenHotkeysAction.MakeString(const S: UnicodeString): IAIMPString;
-begin
-  if Succeeded(FCore.CreateObject(IAIMPString, Result)) then
-    Result.SetData(PWideChar(S), Length(S))
-  else
-    Result := nil;
-end;
-
 procedure TSwitchOutputOpenHotkeysAction.OnChanged(Sender: IInterface);
-
-  function GetActionTitle: IAIMPString;
-  var
-    LService: IAIMPServiceMUI;
-  begin
-    Result := nil;
-    if Succeeded(FCore.QueryInterface(IAIMPServiceMUI, LService)) then
-      LService.GetValue(MakeString('Common\aimp.switchoutput.action.toggle'), Result);
-  end;
-
 var
   LRequest: IAIMPConfig;
   LService: IAIMPServiceOptionsDialog;
@@ -367,28 +374,11 @@ begin
   begin
     FCore.CreateObject(IAIMPConfig, LRequest);
     LRequest.SetValueAsString(MakeString(AIMP_OPT_FRAME_ID), MakeString('20'));
-    LRequest.SetValueAsString(MakeString('OptionsFrameHotkeys\Search'), GetActionTitle);
+    LRequest.SetValueAsString(MakeString('OptionsFrameHotkeys\Search'),
+      LangLoadStringEx('Common\aimp.switchoutput.action.toggle'));
     LService.FrameShow(LRequest, True);
     FForm.Close;
   end;
 end;
 
-//{ TSwitchOutputSettingsDialog }
-//
-//constructor TSwitchOutputSettingsDialog.Create(ACore: IAIMPCore; AForm: IAIMPUIForm);
-//begin
-//
-//end;
-//
-//destructor TSwitchOutputSettingsDialog.Destroy;
-//begin
-//
-//  inherited;
-//end;
-//
-//function TSwitchOutputSettingsDialog.MakeString(const S: UnicodeString): IAIMPString;
-//begin
-//
-//end;
-//
 end.
