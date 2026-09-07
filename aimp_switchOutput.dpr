@@ -2,12 +2,12 @@
 //
 //  Project:   SwitchOutput plugin
 //
-//  Target:    AIMP v5.40 build 2400
+//  Target:    AIMP v6.00 build 3050
 //
 //  Purpose:   Switches between output devices via hotkey
 //
 //  Author:    Artem Izmaylov
-//             © 2023-2025
+//             © 2023-2026
 //             www.aimp.ru
 //
 library aimp_switchOutput;

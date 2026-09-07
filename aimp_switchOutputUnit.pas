@@ -2,12 +2,12 @@
 //
 //  Project:   SwitchOutput plugin
 //
-//  Target:    AIMP v5.40 build 2400
+//  Target:    AIMP v6.00 build 3050
 //
 //  Purpose:   Switches between output devices via hotkey
 //
 //  Author:    Artem Izmaylov
-//             © 2023-2025
+//             © 2023-2026
 //             www.aimp.ru
 //
 unit aimp_switchOutputUnit;
@@ -17,7 +17,9 @@ unit aimp_switchOutputUnit;
 interface
 
 uses
+{$IFDEF MSWINDOWS}
   Windows,
+{$ENDIF}
   apiActions,
   apiCore,
   apiGUI,
@@ -27,6 +29,7 @@ uses
   apiOptions,
   apiPlayer,
   apiPlugin,
+  apiTypes,
   apiWrappers;
 
 type
@@ -78,7 +81,7 @@ function AIMPPluginGetHeader(out Header: IAIMPPlugin): HRESULT; stdcall;
 implementation
 
 uses
-  SysUtils;
+  Types, SysUtils;
 
 function AIMPPluginGetHeader(out Header: IAIMPPlugin): HRESULT; stdcall;
 begin
@@ -134,7 +137,7 @@ function TSwitchOutputPlugin.InfoGet(Index: Integer): PChar;
 begin
   case Index of
     AIMP_PLUGIN_INFO_NAME:
-      Result := 'SwitchOutput v1.0.1';
+      Result := 'SwitchOutput v1.0.2';
     AIMP_PLUGIN_INFO_AUTHOR:
       Result := 'Artem Izmaylov';
     AIMP_PLUGIN_INFO_SHORT_DESCRIPTION:
@@ -241,7 +244,7 @@ end;
 
 procedure TSwitchOutputPlugin.Show(ParentWindow: HWND);
 const
-  FormHeight = 200;
+  FormHeight = {$IFDEF MSWINDOWS}200{$ELSE}154{$ENDIF};
   FormWidth = 400;
 var
   LForm: IAIMPUIForm;
@@ -300,12 +303,17 @@ begin
 
     if Succeeded(LService.CreateForm(ParentWindow, 0, nil, nil, LForm)) then
     try
+    {$IFDEF MSWINDOWS} // for backward compatibility with AIMP v5.40
       GetWindowRect(ParentWindow, LFormPos);
       LFormPos.Left := (LFormPos.Left + LFormPos.Right - FormWidth) div 2;
       LFormPos.Width := FormWidth;
       LFormPos.Top := (LFormPos.Top + LFormPos.Bottom - FormHeight) div 2;
       LFormPos.Height := FormHeight;
       LForm.SetPlacement(TAIMPUIControlPlacement.Create(LFormPos));
+    {$ELSE} // cross-platform solution since v6:
+      LForm.SetValueAsInt32(AIMPUI_FORM_PROPID_CLIENTWIDTH, FormWidth);
+      LForm.SetValueAsInt32(AIMPUI_FORM_PROPID_CLIENTHEIGHT, FormHeight);
+    {$ENDIF}
       LForm.SetValueAsObject(AIMPUI_FORM_PROPID_CAPTION, Localize('Settings'));
       LForm.SetValueAsInt32(AIMPUI_FORM_PROPID_BORDERSTYLE, AIMPUI_FLAGS_BORDERSTYLE_DIALOG);
       LForm.SetValueAsInt32(AIMPUI_FORM_PROPID_PADDING, 8);
@@ -334,7 +342,7 @@ begin
         end;
       end;
     finally
-      LForm.Release(True);
+      LForm.Destroy(True);
     end;
   end;
 end;
@@ -350,18 +358,14 @@ class function TSwitchOutputOpenHotkeysAction.CreateIfAvailable(
   ACore: IAIMPCore; AForm: IAIMPUIForm): IAIMPUIChangeEvents;
 var
   LInstance: TSwitchOutputOpenHotkeysAction;
-  LService: IAIMPServiceVersionInfo;
 begin
   Result := nil;
-  if Succeeded(ACore.QueryInterface(IAIMPServiceVersionInfo, LService)) then
+  if CoreCheckVersion(ACore, 0, 2400) then // Required API is available since v5.40
   begin
-    if LService.GetBuildNumber >= 2400 then // Required API is available since v5.40
-    begin
-      LInstance := TSwitchOutputOpenHotkeysAction.Create;
-      LInstance.FCore := ACore;
-      LInstance.FForm := AForm;
-      Result := LInstance;
-    end;
+    LInstance := TSwitchOutputOpenHotkeysAction.Create;
+    LInstance.FCore := ACore;
+    LInstance.FForm := AForm;
+    Result := LInstance;
   end;
 end;
 

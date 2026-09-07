@@ -1,11 +1,11 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
         <ProjectGuid>{8E96D434-2323-4D3F-AFA3-DC87E6CD68BB}</ProjectGuid>
-        <ProjectVersion>20.2</ProjectVersion>
+        <ProjectVersion>20.4</ProjectVersion>
         <FrameworkType>None</FrameworkType>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Release</Config>
-        <Platform Condition="'$(Platform)'==''">Win64</Platform>
+        <Platform Condition="'$(Platform)'==''">Win32</Platform>
         <TargetedPlatforms>3</TargetedPlatforms>
         <AppType>Library</AppType>
         <MainSource>aimp_switchOutput.dpr</MainSource>
@@ -59,7 +59,7 @@
         <Base>true</Base>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
-        <DCC_DcuOutput>.\$(Platform)\$(Config)</DCC_DcuOutput>
+        <DCC_DcuOutput>.\lib\$(Platform)</DCC_DcuOutput>
         <DCC_ExeOutput>$(AIMPBIN)\$(Platform)\Plugins\aimp_switchOutput\</DCC_ExeOutput>
         <DCC_E>false</DCC_E>
         <DCC_N>false</DCC_N>
@@ -67,7 +67,7 @@
         <DCC_F>false</DCC_F>
         <DCC_K>false</DCC_K>
         <GenDll>true</GenDll>
-        <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;$(DCC_Namespace)</DCC_Namespace>
+        <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;System;Xml;Data;Datasnap;Web;Soap;$(DCC_Namespace)</DCC_Namespace>
         <SanitizedProjectName>aimp_switchOutput</SanitizedProjectName>
         <VerInfo_Locale>1049</VerInfo_Locale>
         <VerInfo_Keys>CompanyName=;FileDescription=aimp_switchOutput.dll;FileVersion=1.0.0.0;InternalName=;LegalCopyright=Artem Izmaylov;LegalTrademarks=;OriginalFilename=aimp_switchOutput.dll;ProgramID=;ProductName=AIMP;ProductVersion=5.30.2533;Comments=</VerInfo_Keys>
@@ -77,7 +77,6 @@
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
         <DCC_UsePackage>AFA.Components;vclwinx;fmx;DbxCommonDriver;vclie;bindengine;IndyIPCommon;VCLRESTComponents;FireDACCommonODBC;cxExportRS28;FireDACCommonDriver;dxHttpIndyRequestRS28;IndyProtocols;appanalytics;vclx;IndyIPClient;dbxcds;vcledge;cxLibraryRS28;dxCloudServiceLibraryRS28;bindcompvclwinx;dxGDIPlusRS28;bindcompfmx;madBasic_;dxCoreRS28;inetdb;dxSpreadSheetCoreRS28;FireDACSqliteDriver;DbxClientDriver;dxSpreadSheetRS28;dxTabbedMDIRS28;dxSkinsCoreRS28;soapmidas;dxBarRS28;vclactnband;dxADOServerModeRS28;fmxFireDAC;dbexpress;dxFireDACServerModeRS28;DBXMySQLDriver;VclSmp;inet;dxServerModeRS28;fmxase;vcltouch;cxTreeListRS28;dxBarDBNavRS28;dbrtl;fmxdae;FireDACMSAccDriver;CustomIPTransport;dxSpreadSheetReportDesignerRS28;dxChartControlRS28;DBXInterBaseDriver;dxComnRS28;vcldsnap;madExcept_;IndySystem;dxSpreadSheetConditionalFormattingDialogsRS28;GuidHelperPackage;cxFireDACAdaptersRS28;vcldb;dxDBXServerModeRS28;dxRibbonRS28;dxmdsRS28;vclFireDAC;madDisAsm_;AIMPSEPackage;bindcomp;FireDACCommon;dxRibbonCustomizationFormRS28;IndyCore;RESTBackendComponents;dxBarExtDBItemsRS28;bindcompdbx;cxTreeListdxBarPopupMenuRS28;rtl;FireDACMySQLDriver;dxDockingRS28;FireDACADSDriver;RESTComponents;DBXSqliteDriver;vcl;IndyIPServer;dsnapxml;dsnapcon;adortl;dxBarExtItemsRS28;dxSpreadSheetCoreConditionalFormattingDialogsRS28;dxSpellCheckerRS28;vclimg;FireDACPgDriver;FireDAC;inetdbxpress;xmlrtl;tethering;cxADOAdaptersRS28;bindcompvcl;dsnap;CloudService;fmxobj;bindcompvclsmp;soaprtl;soapserver;FireDACIBDriver;$(DCC_UsePackage)</DCC_UsePackage>
-        <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
         <BT_BuildType>Debug</BT_BuildType>
         <Manifest_File>(None)</Manifest_File>
         <VerInfo_Locale>1033</VerInfo_Locale>
@@ -85,7 +84,6 @@
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win64)'!=''">
         <DCC_UsePackage>vclwinx;fmx;DbxCommonDriver;vclie;bindengine;IndyIPCommon;VCLRESTComponents;FireDACCommonODBC;cxExportRS28;FireDACCommonDriver;dxHttpIndyRequestRS28;IndyProtocols;appanalytics;vclx;IndyIPClient;dbxcds;vcledge;cxLibraryRS28;dxCloudServiceLibraryRS28;bindcompvclwinx;dxGDIPlusRS28;bindcompfmx;dxCoreRS28;inetdb;dxSpreadSheetCoreRS28;FireDACSqliteDriver;DbxClientDriver;dxSpreadSheetRS28;dxTabbedMDIRS28;dxSkinsCoreRS28;soapmidas;dxBarRS28;vclactnband;dxADOServerModeRS28;fmxFireDAC;dbexpress;dxFireDACServerModeRS28;DBXMySQLDriver;VclSmp;inet;dxServerModeRS28;fmxase;vcltouch;cxTreeListRS28;dxBarDBNavRS28;dbrtl;fmxdae;FireDACMSAccDriver;CustomIPTransport;dxSpreadSheetReportDesignerRS28;dxChartControlRS28;DBXInterBaseDriver;dxComnRS28;vcldsnap;IndySystem;dxSpreadSheetConditionalFormattingDialogsRS28;cxFireDACAdaptersRS28;vcldb;dxDBXServerModeRS28;dxRibbonRS28;dxmdsRS28;vclFireDAC;bindcomp;FireDACCommon;dxRibbonCustomizationFormRS28;IndyCore;RESTBackendComponents;dxBarExtDBItemsRS28;bindcompdbx;cxTreeListdxBarPopupMenuRS28;rtl;FireDACMySQLDriver;dxDockingRS28;FireDACADSDriver;RESTComponents;DBXSqliteDriver;vcl;IndyIPServer;dsnapxml;dsnapcon;adortl;dxBarExtItemsRS28;dxSpreadSheetCoreConditionalFormattingDialogsRS28;dxSpellCheckerRS28;vclimg;FireDACPgDriver;FireDAC;inetdbxpress;xmlrtl;tethering;cxADOAdaptersRS28;bindcompvcl;dsnap;CloudService;fmxobj;bindcompvclsmp;soaprtl;soapserver;FireDACIBDriver;$(DCC_UsePackage)</DCC_UsePackage>
-        <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;$(DCC_Namespace)</DCC_Namespace>
         <BT_BuildType>Debug</BT_BuildType>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <Manifest_File>(None)</Manifest_File>
@@ -146,10 +144,7 @@
                 <Source>
                     <Source Name="MainSource">aimp_switchOutput.dpr</Source>
                 </Source>
-                <Excluded_Packages>
-                    <Excluded_Packages Name="$(BDSBIN)\dcloffice2k290.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
-                    <Excluded_Packages Name="$(BDSBIN)\dclofficexp290.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
-                </Excluded_Packages>
+                <Excluded_Packages/>
             </Delphi.Personality>
             <Deployment Version="5">
                 <DeployFile LocalName="$(BDS)\Redist\iossimulator\libcgunwind.1.0.dylib" Class="DependencyModule">
@@ -295,6 +290,16 @@
                     </Platform>
                     <Platform Name="Android64">
                         <RemoteDir>res\values-v31</RemoteDir>
+                        <Operation>1</Operation>
+                    </Platform>
+                </DeployClass>
+                <DeployClass Name="AndroidSplashStylesV35">
+                    <Platform Name="Android">
+                        <RemoteDir>res\values-v35</RemoteDir>
+                        <Operation>1</Operation>
+                    </Platform>
+                    <Platform Name="Android64">
+                        <RemoteDir>res\values-v35</RemoteDir>
                         <Operation>1</Operation>
                     </Platform>
                 </DeployClass>
@@ -831,6 +836,9 @@
                     <Platform Name="Win64x">
                         <Operation>1</Operation>
                     </Platform>
+                    <Platform Name="WinARM64EC">
+                        <Operation>1</Operation>
+                    </Platform>
                 </DeployClass>
                 <DeployClass Name="ProjectiOSDeviceDebug">
                     <Platform Name="iOSDevice32">
@@ -901,6 +909,10 @@
                         <RemoteDir>Assets</RemoteDir>
                         <Operation>1</Operation>
                     </Platform>
+                    <Platform Name="WinARM64EC">
+                        <RemoteDir>Assets</RemoteDir>
+                        <Operation>1</Operation>
+                    </Platform>
                 </DeployClass>
                 <DeployClass Name="UWP_DelphiLogo44">
                     <Platform Name="Win32">
@@ -908,6 +920,10 @@
                         <Operation>1</Operation>
                     </Platform>
                     <Platform Name="Win64">
+                        <RemoteDir>Assets</RemoteDir>
+                        <Operation>1</Operation>
+                    </Platform>
+                    <Platform Name="WinARM64EC">
                         <RemoteDir>Assets</RemoteDir>
                         <Operation>1</Operation>
                     </Platform>
@@ -1124,6 +1140,7 @@
                 <ProjectRoot Platform="Win32" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="Win64" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="Win64x" Name="$(PROJECTNAME)"/>
+                <ProjectRoot Platform="WinARM64EC" Name="$(PROJECTNAME)"/>
             </Deployment>
             <Platforms>
                 <Platform value="Win32">True</Platform>
